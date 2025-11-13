@@ -1,248 +1,116 @@
-# Employer API
+# Employee Portal (Flask)
 
-A production-ready Flask REST API that serves as the backend for the Employee Portal. This API handles job postings and job applications.
-
-## Features
-
-- ✅ RESTful API endpoints for jobs and applications
-- ✅ PostgreSQL and SQLite database support
-- ✅ API key authentication for protected routes
-- ✅ CORS enabled for cross-origin requests
-- ✅ Database migrations with Flask-Migrate
-- ✅ Production-ready with Gunicorn
-- ✅ Environment-based configuration
-
-## API Endpoints
-
-### Public Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/jobs` | Fetch all available job postings |
-| POST | `/applications` | Submit a new job application |
-| GET | `/health` | Health check endpoint |
-
-### Protected Endpoints (Require API Key)
-
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/jobs` | Create a new job posting |
-| GET | `/applications` | View all job applications |
-
-**Authentication:** Include `x-api-key` header with your API key for protected endpoints.
-
-## Quick Start
-
-### 1. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Configure Environment
-
-Copy the example environment file and update with your values:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and set:
-- `SECRET_KEY`: A secret key for Flask sessions
-- `DATABASE_URL`: Database connection string
-- `EMPLOYER_API_KEY`: API key for protected endpoints
-
-### 3. Initialize Database
-
-```bash
-# Create database tables
-flask db init
-flask db migrate -m "Initial migration"
-flask db upgrade
-
-# Seed sample data
-python seed_data.py
-```
-
-### 4. Run the Application
-
-**Development:**
-```bash
-python app.py
-```
-
-**Production (with Gunicorn):**
-```bash
-gunicorn app:app
-```
-
-The API will be available at `http://localhost:8000`
-
-## API Usage Examples
-
-### Get All Jobs
-
-```bash
-curl http://localhost:8000/jobs
-```
-
-**Response:**
-```json
-[
-  {
-    "id": 1001,
-    "title": "Sous Chef",
-    "role": "Chef",
-    "company": "Culinary Collective",
-    "location": "New York, NY",
-    "description": "Support lead chef with daily kitchen operations...",
-    "required_skills": ["Cooking", "Food Safety", "Inventory Management"],
-    "required_certifications": ["Food Handler Certification"],
-    "posted_at": "2025-11-11T10:30:00"
-  }
-]
-```
-
-### Submit an Application
-
-```bash
-curl -X POST http://localhost:8000/applications \
-  -H "Content-Type: application/json" \
-  -d '{
-    "job_id": 1001,
-    "user_id": 5,
-    "resume_link": "https://example.com/resumes/user5_resume.pdf",
-    "skills": ["Cooking", "Food Safety"],
-    "certifications": ["Food Handler Certification"],
-    "cover_letter": "I am very interested in this position..."
-  }'
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "application_id": 98765
-}
-```
-
-### Create a Job (Protected)
-
-```bash
-curl -X POST http://localhost:8000/jobs \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: myemployerkey123" \
-  -d '{
-    "title": "Software Engineer",
-    "role": "Engineering",
-    "company": "Tech Corp",
-    "location": "Remote",
-    "description": "Build amazing software...",
-    "required_skills": ["Python", "Flask"],
-    "required_certifications": []
-  }'
-```
-
-### Get All Applications (Protected)
-
-```bash
-curl http://localhost:8000/applications \
-  -H "x-api-key: myemployerkey123"
-```
+Production-ready employee job portal built with Flask, featuring authentication, profile management, job browsing with mocked employer API, application workflow, and an in-app employee chat gated by mutual connections.
 
 ## Project Structure
 
 ```
-employer_api/
-├── app.py                 # Main Flask application
-├── config.py              # Configuration settings
-├── models.py              # Database models
-├── seed_data.py           # Database seeding script
-├── requirements.txt       # Python dependencies
-├── Procfile              # Deployment configuration
-├── .env.example          # Environment variables template
+employee_portal/
+├── app.py
+├── config.py
+├── forms.py
+├── models/
 ├── routes/
-│   ├── __init__.py
-│   ├── job_routes.py     # Job-related endpoints
-│   └── application_routes.py  # Application endpoints
+├── services/
+├── templates/
+├── static/
 └── utils/
-    ├── __init__.py
-    └── auth.py           # API key authentication
 ```
 
-## Database Models
+- `models/`: SQLAlchemy models for users, profiles, jobs, applications, chat messages, connection requests, and confirmed connections.
+- `routes/`: Blueprinted view modules (`auth`, `profile`, `job`, `application`, `chat`, `connections`).
+- `services/`: Mock Employer API shim (`fetch_jobs`, `post_application`) to be swapped once the real API is available.
+- `templates/` & `static/`: Bootstrap-based UI, Socket.IO chat client, custom styles.
+- `utils/helpers.py`: Skill-matching utilities and scoring logic.
 
-### Job
-- `id` (Primary Key)
-- `title`, `role`, `company`, `location`
-- `description`
-- `required_skills` (JSON array)
-- `required_certifications` (JSON array)
-- `posted_at` (DateTime)
+## Requirements
 
-### Application
-- `id` (Primary Key)
-- `job_id` (Foreign Key to Job)
-- `user_id`
-- `resume_link`
-- `skills` (JSON array)
-- `certifications` (JSON array)
-- `cover_letter`
-- `created_at` (DateTime)
+- Python 3.11+
+- SQLite (bundled)
+- NodeJS **not** required
+- See `employee_portal/requirements.txt` for Python packages (Flask, Flask-Login, Flask-SocketIO, SQLAlchemy, etc.)
 
-## Deployment
-
-### Render.com
-
-1. Connect your GitHub repository to Render
-2. Set build command: `pip install -r requirements.txt`
-3. Set start command: `gunicorn app:app`
-4. Add environment variables in Render dashboard:
-   - `FLASK_ENV=production`
-   - `SECRET_KEY=<your-secret-key>`
-   - `DATABASE_URL=<your-postgres-url>`
-   - `EMPLOYER_API_KEY=<your-api-key>`
-   - `CORS_ORIGINS=<your-frontend-url>`
-
-### Heroku
-
-1. Install Heroku CLI and login
-2. Create app: `heroku create employer-api`
-3. Add PostgreSQL: `heroku addons:create heroku-postgresql:hobby-dev`
-4. Set environment variables: `heroku config:set SECRET_KEY=...`
-5. Deploy: `git push heroku main`
-6. Run migrations: `heroku run flask db upgrade`
-7. Seed data: `heroku run python seed_data.py`
-
-## Development
-
-### Running Migrations
+## Local Setup
 
 ```bash
-# Create a new migration
-flask db migrate -m "Description of changes"
-
-# Apply migrations
-flask db upgrade
-
-# Rollback migration
-flask db downgrade
+cd "/Users/holy/Documents/projects/employee portal"
+python3 -m venv venv
+source venv/bin/activate
+pip install -r employee_portal/requirements.txt
+python -m employee_portal.app --port 5050
 ```
 
-### Testing
+The app defaults to port `5000`. Use `--port` or set `FLASK_RUN_PORT` to avoid macOS AirPlay conflicts.
 
-Test the API endpoints using curl, Postman, or your preferred HTTP client.
+### Environment Variables
 
-## Security Notes
+Values can be stored in `.env` (auto-loaded by `config.py`):
 
-- Never commit `.env` file to version control
-- Use strong `SECRET_KEY` in production
-- Rotate `EMPLOYER_API_KEY` regularly
-- Configure `CORS_ORIGINS` to specific domains in production
-- Use HTTPS in production
-- Keep dependencies updated
+```
+SECRET_KEY=dev-secret-key
+DATABASE_URL=sqlite:////Users/holy/Documents/projects/employee portal/employee_portal/employee_portal.db
+```
 
-## License
+## Core Features
 
-MIT
+- **Authentication & Profiles**: Register, login, logout, maintain detailed profile with skills, certifications, experience, and resume link.
+- **Job Feed**: Pulls mocked job listings (role, skills, certifications, location) via `services/employer_api_service.fetch_jobs`, caches the results, and computes match scores based on profile alignment.
+- **Applications**: Validates profile completeness, prevents duplicates, snapshots skills/certifications, and posts payloads to the mock API.
+- **Chat**: Real-time messaging using Flask-SocketIO. Messages persist in the database.
+- **Connections**: Employees must exchange and accept connection requests before chatting.
+- **Admin Dashboard**: High-level view of applications (read-only).
+
+## Connection Workflow
+
+1. **Send Request**  
+   Visit `Connections` and click `Connect` next to a colleague. Duplicate or reciprocal pending requests are handled gracefully.
+
+2. **Incoming Requests**  
+   The same page lists incoming requests with `Accept` and `Decline`. Accepting creates a mutual `Connection`; declining removes the request.
+
+3. **Chat Access**  
+   Only confirmed connections appear in the Chat sidebar. Attempts to message non-connections (HTTP or Socket.IO) are blocked.
+
+4. **Remove**  
+   Removing a connection deletes the relationship and any outstanding requests, immediately revoking chat access.
+
+## Mock Employer API
+
+- `fetch_jobs()` returns curated job data (skills, certifications, ISO timestamps).
+- `post_application()` logs the submission and returns a mock confirmation payload.
+- When the real Employer API is ready, replace the internals with `requests.get/post` while preserving the interface.
+
+## Testing & Development Tips
+
+- Compile-time sanity check: `venv/bin/python -m compileall employee_portal`
+- Seed sample users (script snippet used during development):
+
+```python
+from employee_portal import create_app, db
+from employee_portal.models.user import User
+
+users = [
+    {"username": "alex", "email": "alex@example.com", "password": "Password123!"},
+    {"username": "brett", "email": "brett@example.com", "password": "Password123!"},
+    {"username": "casey", "email": "casey@example.com", "password": "Password123!"},
+    {"username": "dana", "email": "dana@example.com", "password": "Password123!"},
+    {"username": "ebony", "email": "ebony@example.com", "password": "Password123!"},
+]
+
+app = create_app()
+with app.app_context():
+    for info in users:
+        user = User.query.filter_by(email=info["email"]).first()
+        if not user:
+            user = User(username=info["username"], email=info["email"])
+            user.set_password(info["password"])
+            db.session.add(user)
+    db.session.commit()
+```
+
+## Deployment Notes
+
+- Use a production-ready WSGI/ASGI server (e.g., Gunicorn + Eventlet/gevent or Uvicorn with ASGI wrapper) instead of the development server.
+- Configure secret keys, database, and message queues (if scaling Socket.IO) via environment variables.
+- Enforce HTTPS and secure cookies in production (`SESSION_COOKIE_SECURE`, `REMEMBER_COOKIE_SECURE`).
 
