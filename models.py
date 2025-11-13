@@ -1,5 +1,5 @@
 """Database models for the Employer API."""
-from datetime import datetime
+from datetime import datetime, timezone
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import JSON
 
@@ -18,7 +18,7 @@ class Job(db.Model):
     description = db.Column(db.Text, nullable=False)
     required_skills = db.Column(JSON, nullable=False, default=list)
     required_certifications = db.Column(JSON, nullable=False, default=list)
-    posted_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    posted_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     
     # Relationship to applications
     applications = db.relationship('Application', backref='job', lazy=True, cascade='all, delete-orphan')
@@ -52,7 +52,7 @@ class Application(db.Model):
     skills = db.Column(JSON, nullable=False, default=list)
     certifications = db.Column(JSON, nullable=False, default=list)
     cover_letter = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     
     def to_dict(self):
         """Convert application model to dictionary for JSON serialization."""
