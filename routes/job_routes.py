@@ -118,3 +118,70 @@ def create_job():
             'error': f'Failed to create job: {str(e)}'
         }), 500
 
+
+@job_bp.route('/jobs/<int:job_id>', methods=['DELETE'])
+@require_api_key
+def delete_job(job_id):
+    """
+    DELETE /jobs/<job_id>
+    Deletes a specific job posting by ID.
+    Protected endpoint - requires API key in x-api-key header.
+    
+    Args:
+        job_id: The ID of the job to delete
+    
+    Returns:
+        200 OK: Job deleted successfully
+        404 Not Found: Job not found
+    """
+    try:
+        job = Job.query.get(job_id)
+        if not job:
+            return jsonify({
+                'success': False,
+                'error': f'Job with ID {job_id} not found'
+            }), 404
+        
+        db.session.delete(job)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Job {job_id} deleted successfully'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'Failed to delete job: {str(e)}'
+        }), 500
+
+
+@job_bp.route('/jobs', methods=['DELETE'])
+@require_api_key
+def delete_all_jobs():
+    """
+    DELETE /jobs
+    Deletes all job postings.
+    Protected endpoint - requires API key in x-api-key header.
+    
+    Returns:
+        200 OK: All jobs deleted successfully
+    """
+    try:
+        count = Job.query.delete()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'{count} job(s) deleted successfully'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'Failed to delete jobs: {str(e)}'
+        }), 500
+
